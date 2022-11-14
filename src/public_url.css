@@ -1,0 +1,22 @@
+#joplin-plugin-content {
+  min-width: 600px;
+}
+
+.dialog {
+  padding: 0;
+  margin: 0;
+  width: 600px;
+  min-width: 600px;
+}
+.dialog-main {
+  padding: 0;
+  margin: 0;
+  width: 600px;
+  min-width: 600px;
+}
+.field {
+  padding: 0;
+  margin: 0;
+  width: 600px;
+  min-width: 600px;
+}
