@@ -5,11 +5,13 @@ const fs = (joplin as any).require('fs-extra');
 const path = require('path');
 
 const bimba_server_url = "http://shapkinaa.ru:8000";
+// const bimba_server_url = "http://192.168.88.249:5000";
 
 async function authToBimba(username: string, password: string): Promise<string> {
 	var token = null;
 	try {
 		const url = bimba_server_url + "/auth";
+
 		const response = await fetch(url, {
 														method: 'POST',
 														body: JSON.stringify({
@@ -28,6 +30,8 @@ async function authToBimba(username: string, password: string): Promise<string> 
 
 		const result = await response.json();
 		token = result['access_token'];
+
+								// joplin.views.dialogs.showMessageBox(username + '|' + password + '|' + token + '|' + result);
 	}
 	catch (error) {
 		if (error instanceof Error) {
@@ -87,7 +91,7 @@ joplin.plugins.register({
 							const accountName = await joplin.settings.value('BimbaAccountName');
 							const accountPassword = await joplin.settings.value('BimbaAccountPassword');
 							var accountToken = await joplin.settings.value('BimbaAccountToken');
-				
+
 							// try {
 							// 	const response = await fetch('http://shapkinaa.ru:8000/auth', {
 							// 														method: 'POST',
@@ -116,12 +120,18 @@ joplin.plugins.register({
 							// 		joplin.views.dialogs.showMessageBox('unexpected error: '+error);
 							// 	}
 							// }
-							try {
-								const accessToken = authToBimba(accountName, accountPassword);
-							}
-							catch (error) {
-								joplin.views.dialogs.showMessageBox('error message: '+error);
-								return null;
+							accountToken = null;
+									// joplin.views.dialogs.showMessageBox('1: '+accountToken);
+							if (accountToken == '' || accountToken == null) {
+								try {
+									accountToken = await authToBimba(accountName, accountPassword);
+								}
+								catch (error) {
+									joplin.views.dialogs.showMessageBox('error message: '+error);
+									return null;
+								}
+
+								await joplin.settings.setValue('BimbaAccountToken', accountToken);
 							}
 
 							const selected_note = await joplin.workspace.selectedNote();
@@ -165,12 +175,13 @@ joplin.plugins.register({
 								else {
 									joplin.views.dialogs.showMessageBox('unexpected error: '+error);
 								}
+								return null;
 							}
 
 							const result = await response.json();
-							const public_url = result['public_url'];
+							const public_url = await result['public_url'];
 
-					// search tag of server
+							// search tag of server
 							var tag_server = await joplin.data.get(["search"], {
 		      															query: "published-to-bimba-server",
   		    															type: "tag",
@@ -393,7 +404,7 @@ joplin.plugins.register({
 		//---------created main button[entry point to plugin]
 		await joplin.views.menuItems.create('Export to BimbaServer', 'exporterToBimba', MenuItemLocation.EditorContextMenu);
 		await joplin.views.menuItems.create('Delete from BimbaServer', 'deleteFromBimba', MenuItemLocation.EditorContextMenu);
-		await joplin.views.toolbarButtons.create('linkMaker', 'linkMaker', ToolbarButtonLocation.EditorToolbar);
+		// await joplin.views.toolbarButtons.create('linkMaker', 'linkMaker', ToolbarButtonLocation.EditorToolbar);
 		
 		// joplin.workspace.onNoteSelectionChange(async (event:any) => {
 		// 		const selected_note = await joplin.workspace.selectedNote();
