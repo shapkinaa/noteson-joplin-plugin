@@ -4,8 +4,8 @@ import { MenuItemLocation, SettingItemType, SettingItemSubType, ToolbarButtonLoc
 const fs = (joplin as any).require('fs-extra');
 const path = require('path');
 
-const bimba_server_url = "http://shapkinaa.ru:8000";
-// const bimba_server_url = "http://192.168.88.249:5000";
+// const bimba_server_url = "http://shapkinaa.ru:8000";
+const bimba_server_url = "http://127.0.0.1:5000";
 
 async function authToBimba(username: string, password: string): Promise<string> {
 	var token = null;
@@ -35,11 +35,9 @@ async function authToBimba(username: string, password: string): Promise<string> 
 	}
 	catch (error) {
 		if (error instanceof Error) {
-			// joplin.views.dialogs.showMessageBox('error message: '+error.message);
 			throw new Error(`Error! error message: ${error.message}`);
 		}
 		else {
-			// joplin.views.dialogs.showMessageBox('unexpected error: '+error);
 			throw new Error(`Error! unexpected error: ${error}`);
 		}
 	}
