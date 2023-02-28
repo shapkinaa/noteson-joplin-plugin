@@ -32,8 +32,6 @@ async function authToBimba(username: string, password: string): Promise<string> 
 
 		const result = await response.json();
 		token = result['access_token'];
-
-								// joplin.views.dialogs.showMessageBox(username + '|' + password + '|' + token + '|' + result);
 	}
 	catch (error) {
 		if (error instanceof Error) {
