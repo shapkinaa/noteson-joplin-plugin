@@ -33,5 +33,14 @@
   "bugs": {
     "url": "https://github.com/aman-d-1-n-only/joplin-exports-to-ssg/issues"
   },
-  "homepage": "https://github.com/aman-d-1-n-only/joplin-exports-to-ssg#readme"
+  "homepage": "https://github.com/aman-d-1-n-only/joplin-exports-to-ssg#readme",
+  "browser": {
+    "fs": false
+  },
+  "dependencies": {
+    "fs": "^0.0.1-security",
+    "net": "^1.0.2",
+    "request": "^2.88.2",
+    "tls": "^0.0.1"
+  }
 }

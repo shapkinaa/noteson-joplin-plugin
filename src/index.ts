@@ -1,11 +1,13 @@
 import joplin from 'api';
 import { MenuItemLocation, SettingItemType, SettingItemSubType, ToolbarButtonLocation } from 'api/types';
 
+const request = require("request");
+
 const fs = (joplin as any).require('fs-extra');
 const path = require('path');
 
-// const bimba_server_url = "http://shapkinaa.ru:8000";
-const bimba_server_url = "http://127.0.0.1:5000";
+const bimba_server_url = "http://shapkinaa.ru:8000";
+// const bimba_server_url = "http://127.0.0.1:5000";
 
 async function authToBimba(username: string, password: string): Promise<string> {
 	var token = null;
@@ -86,40 +88,18 @@ joplin.plugins.register({
             name: 'exporterToBimba',
             label: 'Export to BimbaServer',
             execute: async (...args) => {
+
+							// const s_note = await joplin.workspace.selectedNote();
+									// joplin.views.dialogs.showMessageBox('s_note.id='+JSON.stringify(s_note));
+
+
+				// return null;
+
 							const accountName = await joplin.settings.value('BimbaAccountName');
 							const accountPassword = await joplin.settings.value('BimbaAccountPassword');
 							var accountToken = await joplin.settings.value('BimbaAccountToken');
 
-							// try {
-							// 	const response = await fetch('http://shapkinaa.ru:8000/auth', {
-							// 														method: 'POST',
-							// 														body: JSON.stringify({
-							// 																		username: accountName,
-							// 																		password: accountPassword,
-							// 														}),
-							// 														headers: {
-							// 																		'Content-Type': 'application/json',
-							// 																		Accept: 'application/json',
-							// 														},
-							// 										});
-
-							// 	if (!response.ok) {
-							// 		throw new Error(`Error! status: ${response.status}`);
-							// 	}
-
-							// 	const result = await response.json();
-							// 	accountToken = result['access_token'];
-							// }
-							// catch (error) {
-							// 	if (error instanceof Error) {
-							// 		joplin.views.dialogs.showMessageBox('error message: '+error.message);
-							// 	}
-							// 	else {
-							// 		joplin.views.dialogs.showMessageBox('unexpected error: '+error);
-							// 	}
-							// }
 							accountToken = null;
-									// joplin.views.dialogs.showMessageBox('1: '+accountToken);
 							if (accountToken == '' || accountToken == null) {
 								try {
 									accountToken = await authToBimba(accountName, accountPassword);
@@ -139,10 +119,6 @@ joplin.plugins.register({
 							if (note_filename == '') {
 								note_filename = null;
 							}
-							// else {
-							// 	joplin.views.dialogs.showMessageBox('ishow button - 1');
-							// 	joplin.views.toolbarButtons.create('linkMaker', 'linkMaker', ToolbarButtonLocation.EditorToolbar);
-							// }
 
 							var response = null;
 							try {
@@ -175,6 +151,44 @@ joplin.plugins.register({
 								}
 								return null;
 							}
+
+							const { items } = await joplin.data.get(['notes', selected_note.id, 'resources'] , { fields: ['id', 'title', 'file_extension'] } );
+							// joplin.views.dialogs.showMessageBox('length='+items.length);
+
+							for( var i = 0; i < items.length; i++ ) {
+								const resource = items[i];
+
+								const filename = resource.id+'.'+resource.file_extension;
+								const resourceDir = await joplin.settings.globalValue('resourceDir');
+
+								const srcPath = path.join(resourceDir, filename);
+
+								// joplin.views.dialogs.showMessageBox(srcPath);
+
+								const files_server = bimba_server_url + "/files";
+
+								// const file = fs.readFileSync(srcPath);
+
+   					// 		let formData = new FormData();
+   					// 		formData.append('file', file);
+								const options = {
+																method: "POST",
+																url: files_server,
+																	port: 80,
+					  											headers: {
+																		'Authorization': 'Bearer ' + accountToken
+ 											 					},
+																	formData: {
+																		'file': fs.createReadStream(srcPath)
+																	}
+																};
+
+								request(options, function (err, res, body) {
+														if (err) 
+																			joplin.views.dialogs.showMessageBox('error:'+JSON.stringify(err));
+											  		// joplin.views.dialogs.showMessageBox(body);
+												})
+								};
 
 							const result = await response.json();
 							const public_url = await result['public_url'];
@@ -319,9 +333,6 @@ joplin.plugins.register({
 				}
 
 				// add tag to note if not found this tag
-				// await joplin.data.post(["tags", tag_server.id, "notes"], null, {
-    //         id: selected_note.id,
-    //         });
 				await joplin.data.delete(["tags", tag_server.id, "notes", selected_note.id]);
 
 
