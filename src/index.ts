@@ -6,13 +6,13 @@ const request = require("request");
 const fs = (joplin as any).require('fs-extra');
 const path = require('path');
 
-const bimba_server_url = "http://shapkinaa.ru:8000";
+const backend_server_url = "http://noteson.ru:8000";
 // const bimba_server_url = "http://127.0.0.1:5000";
 
-async function authToBimba(username: string, password: string): Promise<string> {
+async function authToBackendServer(username: string, password: string): Promise<string> {
 	var token = null;
 	try {
-		const url = bimba_server_url + "/auth";
+		const url = backend_server_url + "/auth";
 
 		const response = await fetch(url, {
 														method: 'POST',
@@ -51,24 +51,12 @@ joplin.plugins.register({
 
 		/*******************Dialog Configurations*******************/
 		const dialogs = joplin.views.dialogs;
-		const ssg_dialog = await dialogs.create('BimbaServer-Dialog');
-		const public_url_dialog = await dialogs.create('BimbaServer-Public-URL-Dialog');
+		const public_url_dialog = await dialogs.create('Public-URL-Dialog');
 
 		//---------add the css file for form
-		await dialogs.addScript(ssg_dialog, './form.css');
 		await dialogs.addScript(public_url_dialog, './public_url.css');
 
 		//---------setting controls of dialog
-		await dialogs.setButtons(ssg_dialog, [
-			{
-				id: 'submit',
-				title : 'Export',
-			},
-			{
-				id: 'cancel',
-				title:'Cancel'
-			}
-		]);
 		await dialogs.setButtons(public_url_dialog, [
 			{
 				id: 'copyclipboard',
@@ -83,31 +71,24 @@ joplin.plugins.register({
 		/*******************Exporting Code*******************/
 		//---------respective command for main button
 		await joplin.commands.register({
-            name: 'exporterToBimba',
-            label: 'Export to BimbaServer',
+            name: 'exporterToBackendServer',
+            label: 'Export to NotesOn',
             execute: async (...args) => {
-
-							// const s_note = await joplin.workspace.selectedNote();
-									// joplin.views.dialogs.showMessageBox('s_note.id='+JSON.stringify(s_note));
-
-
-				// return null;
-
-							const accountName = await joplin.settings.value('BimbaAccountName');
-							const accountPassword = await joplin.settings.value('BimbaAccountPassword');
-							var accountToken = await joplin.settings.value('BimbaAccountToken');
+							const accountName = await joplin.settings.value('NotesOnAccountName');
+							const accountPassword = await joplin.settings.value('NotesOnAccountPassword');
+							var accountToken = await joplin.settings.value('NotesOnAccountToken');
 
 							accountToken = null;
 							if (accountToken == '' || accountToken == null) {
 								try {
-									accountToken = await authToBimba(accountName, accountPassword);
+									accountToken = await authToBackendServer(accountName, accountPassword);
 								}
 								catch (error) {
 									joplin.views.dialogs.showMessageBox('error message: '+error);
 									return null;
 								}
 
-								await joplin.settings.setValue('BimbaAccountToken', accountToken);
+								await joplin.settings.setValue('NotesOnAccountToken', accountToken);
 							}
 
 							const selected_note = await joplin.workspace.selectedNote();
@@ -120,7 +101,7 @@ joplin.plugins.register({
 
 							var response = null;
 							try {
-								const url = bimba_server_url + "/notes";
+								const url = backend_server_url + "/notes";
 								response = await fetch(url, {
 																					method: 'POST',
 																					body: JSON.stringify({
@@ -151,7 +132,6 @@ joplin.plugins.register({
 							}
 
 							const { items } = await joplin.data.get(['notes', selected_note.id, 'resources'] , { fields: ['id', 'title', 'file_extension'] } );
-							// joplin.views.dialogs.showMessageBox('length='+items.length);
 
 							for( var i = 0; i < items.length; i++ ) {
 								const resource = items[i];
@@ -161,14 +141,8 @@ joplin.plugins.register({
 
 								const srcPath = path.join(resourceDir, filename);
 
-								// joplin.views.dialogs.showMessageBox(srcPath);
+								const files_server = backend_server_url + "/files";
 
-								const files_server = bimba_server_url + "/files";
-
-								// const file = fs.readFileSync(srcPath);
-
-   					// 		let formData = new FormData();
-   					// 		formData.append('file', file);
 								const options = {
 																method: "POST",
 																url: files_server,
@@ -183,26 +157,39 @@ joplin.plugins.register({
 
 								request(options, function (err, res, body) {
 														if (err) 
-																			joplin.views.dialogs.showMessageBox('error:'+JSON.stringify(err));
-											  		// joplin.views.dialogs.showMessageBox(body);
+															joplin.views.dialogs.showMessageBox('error:'+JSON.stringify(err));
 												})
 								};
 
 							const result = await response.json();
 							const public_url = await result['public_url'];
 
+							const public_url_dialog_html = `
+								<div class="dialog" >
+									<div class="dialog-main">
+										<div class="field">
+											public url for this note is:
+										</div>
+										<div class="field">`
+											+ public_url +
+										`</div>
+									</div>
+								</div>`
+							dialogs.setHtml(public_url_dialog, public_url_dialog_html);
+
+															// joplin.views.dialogs.showMessageBox(public_url_dialog_html);
 							// search tag of server
 							var tag_server = await joplin.data.get(["search"], {
-		      															query: "published-to-bimba-server",
+		      															query: "published-to-noteson-server",
   		    															type: "tag",
     		  															fields: "id,title",
       																	limit: 10,
       																	sort: "title ASC",
 	    													});
-							if (tag_server.items == null) {
+							if (tag_server.items == null || tag_server.items[0] == null) {
 								// add tag if not found
 					 			tag_server = await joplin.data.post(["tags"], null, {
-            														title: "published-to-bimba-server",
+            														title: "published-to-noteson-server",
           											});
 							}
 							else {
@@ -215,20 +202,6 @@ joplin.plugins.register({
           	  						id: selected_note.id,
             	});
 
-					// joplin.views.dialogs.showMessageBox('public url for this note is: \n' + public_url);
-
-							await dialogs.setHtml(public_url_dialog, `
-								<div class="dialog" >
-									<div class="dialog-main">
-										<div class="field">
-											public url for this note is:
-										</div>
-										<div class="field">`
-											+ public_url +
-										`</div>
-									</div>
-								</div>
-							`);
 			
 							const { id, formData } = await dialogs.open(public_url_dialog);
 							if (id == "copyclipboard") {
@@ -238,15 +211,15 @@ joplin.plugins.register({
 		});
 
 		await joplin.commands.register({
-            name: 'deleteFromBimba',
-            label: 'Delete from BimbaServer',
+            name: 'deleteFromBackendServer',
+            label: 'Delete from NotesOn',
             execute: async (...args) => {
-							const accountName = await joplin.settings.value('BimbaAccountName');
-							const accountPassword = await joplin.settings.value('BimbaAccountPassword');
-							var accountToken = await joplin.settings.value('BimbaAccountToken');
+							const accountName = await joplin.settings.value('NotesOnAccountName');
+							const accountPassword = await joplin.settings.value('NotesOnAccountPassword');
+							var accountToken = await joplin.settings.value('NotesOnAccountToken');
 				
 							try {
-								const accessToken = authToBimba(accountName, accountPassword);
+								const accessToken = authToBackendServer(accountName, accountPassword);
 							}
 							catch (error) {
 								joplin.views.dialogs.showMessageBox('error message: '+error);
@@ -256,7 +229,7 @@ joplin.plugins.register({
 							const selected_note = await joplin.workspace.selectedNote();
 
 							try {
-								const url = bimba_server_url + "/note/" + selected_note.id;
+								const url = backend_server_url + "/note/" + selected_note.id;
 								const response = await fetch(url, {
 																					method: 'DELETE',
 																					headers: {
@@ -283,7 +256,7 @@ joplin.plugins.register({
 							// search tag of server
 							var tag_server = null;
  							const result = await joplin.data.get(["search"], {
-      																query: "published-to-bimba-server",
+      																query: "published-to-noteson-server",
       																type: "tag",
       																fields: "id,title",
       																limit: 10,
@@ -292,7 +265,7 @@ joplin.plugins.register({
 							if (result.items == null) {
 								// add tag if not found
 				 				tag_server = await joplin.data.post(["tags"], null, {
-            													title: "published-to-bimba-server",
+            													title: "published-to-noteson-server",
           			});
 							}
 							else {
@@ -313,7 +286,7 @@ joplin.plugins.register({
 				// search tag of server
 				var tag_server = null;
  				const result = await joplin.data.get(["search"], {
-      		query: "published-to-bimba-server",
+      		query: "published-to-noteson-server",
       		type: "tag",
       		fields: "id,title",
       		limit: 10,
@@ -322,7 +295,7 @@ joplin.plugins.register({
 				if (result.items == null) {
 					/// add tag if not found
 				 	tag_server = await joplin.data.post(["tags"], null, {
-            title: "published-to-bimba-server",
+            title: "published-to-noteson-server",
           });
 				}
 				else {
@@ -332,75 +305,36 @@ joplin.plugins.register({
 
 				// add tag to note if not found this tag
 				await joplin.data.delete(["tags", tag_server.id, "notes", selected_note.id]);
-
-
-// await joplin.data.post(['notes', selected_note.id, 'tags'], null, { title: "published-to-bimba-server" });
-				// add new tag to current note
-				//  const newTag = await joplin.data.post(["tags"], null, {
-    //         title: "published-to-bimba-server",
-    //       });
-				// await joplin.data.post(["tags", newTag.id, "notes"], null, {
-    //           id: selected_note.id,
-    //         });
-
-				
-				// get all tags from current note
- 			// 	const tags = await joplin.data.get(["notes", selected_note.id, "tags"], { fields: ['id', 'title'] });
-				// for (const tag of tags.items) {
-				// 	joplin.views.dialogs.showMessageBox(tag.id + ' - ' + tag.title);
-				// }
-
-				// get all tags from notes
- 			// 	const tags = await joplin.data.get(["tags"], { fields: ['id', 'title'] });
-				// for (const tag of tags.items) {
-				// 	joplin.views.dialogs.showMessageBox(tag.id + ' - ' + tag.title);
-				// }
-
-
-				// var tags = await joplin.data.get(["notes", noteId, "tags"], {
-    //       fields: "id, title",
-    //       limit: 20,
-    //       page: pageNum++,
-    //     });
-    //     for (const tag of tags.items) {
-    //       if (typeof taggingInfo[tag.id] === "undefined") {
-    //         taggingInfo[tag.id] = {};
-    //         taggingInfo[tag.id]["count"] = 1;
-    //         taggingInfo[tag.id]["title"] = tag.title;
-    //       } else {
-    //         taggingInfo[tag.id]["count"]++;
-    //       }
-    //     }				
 			},
 		});
 		
-		await joplin.settings.registerSection('BimbaServerSection', {
-			label: 'Bimba Server Settings',
+		await joplin.settings.registerSection('NotesOnServerSection', {
+			label: 'NotesOn Server Settings',
 			iconName: 'fas fa-cog',
 		});
 
 		await joplin.settings.registerSettings({
-			'BimbaAccountName': {
+			'NotesOnAccountName': {
 				value: '',
 				type: SettingItemType.String,
-				section: 'BimbaServerSection',
+				section: 'NotesOnServerSection',
 				public: true,
 				label: 'Account name',
 			},
 
-			'BimbaAccountPassword': {
+			'NotesOnAccountPassword': {
 				value: '',
 				type: SettingItemType.String,
-				section: 'BimbaServerSection',
+				section: 'NotesOnServerSection',
 				public: true,
 				secure: true,
 				label: 'Account password',
 			},
 
-			'BimbaAccountToken': {
+			'NotesOnAccountToken': {
 				value: '',
 				type: SettingItemType.String,
-				section: 'BimbaServerSection',
+				section: 'NotesOnServerSection',
 				public: false,
 				secure: true,
 				label: 'Account token',
@@ -409,23 +343,7 @@ joplin.plugins.register({
 		});
 
 		//---------created main button[entry point to plugin]
-		await joplin.views.menuItems.create('Export to BimbaServer', 'exporterToBimba', MenuItemLocation.EditorContextMenu);
-		await joplin.views.menuItems.create('Delete from BimbaServer', 'deleteFromBimba', MenuItemLocation.EditorContextMenu);
-		// await joplin.views.toolbarButtons.create('linkMaker', 'linkMaker', ToolbarButtonLocation.EditorToolbar);
-		
-		// joplin.workspace.onNoteSelectionChange(async (event:any) => {
-		// 		const selected_note = await joplin.workspace.selectedNote();
-
-		// 		var note_filename = selected_note.title.replace(/[^a-zA-Z0-9_-]/g,'');
-		// 		if (note_filename != '') {
-		// 			joplin.views.dialogs.showMessageBox('ishow button - 1');
-
-		// 			joplin.views.dialogs.showMessageBox('ishow button - 2');
-		// 		}
-		// });
-
-		// joplin.workspace.onNoteChange(async (event:any) => {
-		// 	joplin.views.dialogs.showMessageBox('note is changed');
-		// });
+		await joplin.views.menuItems.create('Export to NotesOn', 'exporterToBackendServer', MenuItemLocation.EditorContextMenu);
+		await joplin.views.menuItems.create('Delete from NotesOn', 'deleteFromBackendServer', MenuItemLocation.EditorContextMenu);
 	},
 });
