@@ -1,5 +1,5 @@
 {
-  "name": "joplin-plugin-export-to-bimbaserver",
+  "name": "joplin-plugin-export-to-noteson",
   "version": "1.0.3",
   "scripts": {
     "dist": "webpack --joplin-plugin-config buildMain && webpack --joplin-plugin-config buildExtraScripts && webpack --joplin-plugin-config createArchive",
@@ -24,7 +24,7 @@
     "webpack-cli": "^3.3.12",
     "yargs": "^16.2.0"
   },
-  "description": "This is a joplin plugin that exports single note from [Joplin](https://joplinapp.org/) as markdown file along with their static files[ images , pdfs etc] to Bimba Server.",
+  "description": "This is a joplin plugin that exports single note from [Joplin](https://joplinapp.org/) as html file along with their static files[ images , pdfs etc] to NotesOn.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/aman-d-1-n-only/joplin-exports-to-ssg.git"

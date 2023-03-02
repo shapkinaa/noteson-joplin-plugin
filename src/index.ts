@@ -7,7 +7,7 @@ const fs = (joplin as any).require('fs-extra');
 const path = require('path');
 
 const backend_server_url = "http://noteson.ru:8000";
-// const bimba_server_url = "http://127.0.0.1:5000";
+// const backend_server_url = "http://127.0.0.1:5000";
 
 async function authToBackendServer(username: string, password: string): Promise<string> {
 	var token = null;
