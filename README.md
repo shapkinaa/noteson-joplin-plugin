@@ -2,6 +2,7 @@
 
 This is a joplin plugin that exports selected note from [Joplin](https://joplinapp.org/) as html file along with their static files[ images , pdfs etc].
 
+
 ## How it can be useful for you ?
 
 Let say you want to create your portfolio website -
@@ -12,6 +13,7 @@ Let say you want to create your portfolio website -
 
 3. Copy public link of experted note and share this link.
 
+
 ## How to use it ?
 
 ### For export note
@@ -20,7 +22,9 @@ Let say you want to create your portfolio website -
 
 - Then a little menu will appear on your screen. Choose `Export to NotesOn` from there.
 
-### For detele note from NotesOn server (Unpublic note)
+- The posted note will be tagged "Published-to-noteson-server"
+
+### For delete note from NotesOn server 
 
 - Right click on notebook whoose note you want to export.
 
