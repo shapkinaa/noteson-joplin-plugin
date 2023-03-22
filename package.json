@@ -27,13 +27,13 @@
   "description": "This is a joplin plugin that exports single note from [Joplin](https://joplinapp.org/) as html file along with their static files[ images , pdfs etc] to NotesOn.",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/aman-d-1-n-only/joplin-exports-to-ssg.git"
+    "url": "git+https://github.com/shapkinaa/noteson-joplin-plugin.git"
   },
   "author": "shapkinaa",
   "bugs": {
-    "url": "https://github.com/aman-d-1-n-only/joplin-exports-to-ssg/issues"
+    "url": "https://github.com/shapkinaa/noteson-joplin-plugin/issues"
   },
-  "homepage": "https://github.com/aman-d-1-n-only/joplin-exports-to-ssg#readme",
+  "homepage": "https://github.com/shapkinaa/noteson-joplin-plugin#readme",
   "browser": {
     "fs": false
   },
