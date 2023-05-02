@@ -27,7 +27,9 @@ async function authToBackendServer(username: string, password: string): Promise<
 											});
 
 		if (!response.ok) {
-			throw new Error(`Error! status: ${response.status}`);
+			const result = await response.json();
+
+			throw new Error(`${result.error}`);
 		}
 
 		const result = await response.json();
