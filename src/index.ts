@@ -35,10 +35,10 @@ async function authToBackendServer(username: string, password: string): Promise<
 	}
 	catch (error) {
 		if (error instanceof Error) {
-			throw new Error(`Error! error message: ${error.message}`);
+			throw new Error(`${error.message}`);
 		}
 		else {
-			throw new Error(`Error! unexpected error: ${error}`);
+			throw new Error(`Unexpected error: ${error}`);
 		}
 	}
 	return token;
@@ -84,7 +84,7 @@ joplin.plugins.register({
 									accountToken = await authToBackendServer(accountName, accountPassword);
 								}
 								catch (error) {
-									joplin.views.dialogs.showMessageBox('error message: '+error);
+									joplin.views.dialogs.showMessageBox(error);
 									return null;
 								}
 
@@ -123,10 +123,10 @@ joplin.plugins.register({
 							}
 							catch (error) {
 								if (error instanceof Error) {
-									joplin.views.dialogs.showMessageBox('error message: '+error.message);
+									joplin.views.dialogs.showMessageBox(error.message);
 								}
 								else {
-									joplin.views.dialogs.showMessageBox('unexpected error: '+error);
+									joplin.views.dialogs.showMessageBox('Unexpected error: '+error);
 								}
 								return null;
 							}
@@ -157,7 +157,7 @@ joplin.plugins.register({
 
 								request(options, function (err, res, body) {
 														if (err) 
-															joplin.views.dialogs.showMessageBox('error:'+JSON.stringify(err));
+															joplin.views.dialogs.showMessageBox('Error: ' + JSON.stringify(err));
 												})
 								};
 
@@ -177,7 +177,6 @@ joplin.plugins.register({
 								</div>`
 							dialogs.setHtml(public_url_dialog, public_url_dialog_html);
 
-															// joplin.views.dialogs.showMessageBox(public_url_dialog_html);
 							// search tag of server
 							var tag_server = await joplin.data.get(["search"], {
 		      															query: "published-to-noteson-server",
@@ -222,7 +221,7 @@ joplin.plugins.register({
 								const accessToken = authToBackendServer(accountName, accountPassword);
 							}
 							catch (error) {
-								joplin.views.dialogs.showMessageBox('error message: '+error);
+								joplin.views.dialogs.showMessageBox(error);
 								return null;
 							}
 
@@ -240,15 +239,15 @@ joplin.plugins.register({
 																	});
 
 								if (!response.ok) {
-									throw new Error(`Error! status: ${response.status}`);
+									throw new Error(`${response.status}`);
 								}
 							}
 							catch (error) {
 								if (error instanceof Error) {
-									joplin.views.dialogs.showMessageBox('error message: '+error.message);
+									joplin.views.dialogs.showMessageBox(error.message);
 								}
 								else {
-									joplin.views.dialogs.showMessageBox('unexpected error: '+error);
+									joplin.views.dialogs.showMessageBox('Unexpected error: '+error);
 								}
 								return null;
 							}
