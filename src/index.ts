@@ -6,8 +6,8 @@ const request = require("request");
 const fs = (joplin as any).require('fs-extra');
 const path = require('path');
 
-const backend_server_url = "http://noteson.ru:8000";
-// const backend_server_url = "http://127.0.0.1:5000";
+// const backend_server_url = "http://noteson.ru:8000";
+const backend_server_url = "http://127.0.0.1:5000";
 
 async function authToBackendServer(username: string, password: string): Promise<string> {
 	var token = null;
@@ -29,7 +29,7 @@ async function authToBackendServer(username: string, password: string): Promise<
 		if (!response.ok) {
 			const result = await response.json();
 
-			throw new Error(`${result.error}`);
+			throw new Error(`${result.message}`);
 		}
 
 		const result = await response.json();
@@ -62,11 +62,11 @@ joplin.plugins.register({
 		await dialogs.setButtons(public_url_dialog, [
 			{
 				id: 'copyclipboard',
-				title:'Copy URL to Clipboard'
+				title: 'Copy URL to Clipboard'
 			},
 			{
 				id: 'close',
-				title:'Close'
+				title: 'Close'
 			}
 		]);
 

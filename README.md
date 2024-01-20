@@ -11,21 +11,23 @@ Let say you want to create your portfolio website -
 
 2. Then export your note using this plugin.
 
-3. Copy public link of experted note and share this link.
+3. Copy public link of exported note and share this link.
 
 
 ## How to use it ?
 
 ### For export note
 
-- Right click on notebook whoose note you want to export.
+- Right click on note you want to export.
 
 - Then a little menu will appear on your screen. Choose `Export to NotesOn` from there.
+
+- Copy public link.
 
 - The posted note will be tagged "Published-to-noteson-server"
 
 ### For delete note from NotesOn server 
 
-- Right click on notebook whoose note you want to export.
+- Right click on note you want to export.
 
 - Then a little menu will appear on your screen. Choose `Delete from NotesOn` from there.
