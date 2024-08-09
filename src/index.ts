@@ -101,6 +101,11 @@ joplin.plugins.register({
 								note_filename = null;
 							}
 
+							const tags = await joplin.data.get(['notes', selected_note.id, 'tags']);
+							var metadata = {
+								"tags": tags
+							};
+
 							var response = null;
 							try {
 								const url = backend_server_url + "/notes";
@@ -111,6 +116,7 @@ joplin.plugins.register({
 																											note_content: selected_note.body,
 																											note_filename: note_filename,
 																											note_title: note_title,
+																											metadata: JSON.stringify(metadata),
 																					}),
 																					headers: {
 																											'Authorization': 'Bearer ' + accountToken,
