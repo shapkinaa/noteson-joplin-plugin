@@ -1,0 +1,23 @@
+#joplin-plugin-content {
+  min-width: 600px;
+}
+
+.dialog {
+  padding: 0;
+  margin: 0;
+}
+.dialog-main {
+  padding: 0;
+  margin: 0;
+}
+.field {
+  padding: 0;
+  margin: 0;
+}
+.feedback_form {
+  width: 99%;
+}
+.feedback_content {
+   width: 100%;
+   height: 200px;
+}
