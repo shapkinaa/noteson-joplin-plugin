@@ -1,6 +1,7 @@
 {
-  "name": "joplin-plugin-export-to-noteson",
+  "name": "@joplin/joplin-plugin-export-to-noteson",
   "version": "1.0.7",
+  "publishConfig": { "access": "public" },
   "scripts": {
     "dist": "env NODE_OPTIONS=--openssl-legacy-provider webpack --joplin-plugin-config buildMain && env NODE_OPTIONS=--openssl-legacy-provider webpack --joplin-plugin-config buildExtraScripts && env NODE_OPTIONS=--openssl-legacy-provider webpack --joplin-plugin-config createArchive",
     "prepare": "npm run dist",
