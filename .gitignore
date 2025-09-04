@@ -1,6 +1,5 @@
 dist/
 node_modules/
-publish/
 .DS_Store
 .gitignore
 .npmignore
