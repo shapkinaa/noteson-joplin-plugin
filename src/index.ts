@@ -1,14 +1,28 @@
+// import joplin from 'api';
+
+// joplin.plugins.register({
+// 	onStart: async function() {
+// 		// eslint-disable-next-line no-console
+// 		console.info('Hello world. Test plugin started!');
+// 	},
+// });
+
+
+
 import joplin from 'api';
 import { MenuItemLocation, SettingItemType, SettingItemSubType, ToolbarButtonLocation } from 'api/types';
 
-const request = require("request");
+// const request = require("request");
 
 const fs = (joplin as any).require('fs-extra');
 const path = require('path');
 
-// const backend_server_url = "http://noteson.ru:8000";
-const backend_server_url = "http://127.0.0.1:5000";
+import { auth_to_noteson, post_file, post_note, get_notes, get_templates, post_feedback, delete_note } from './noteson_requests';
 
+// const backend_server_url = "http://noteson.ru:8000";
+// const backend_server_url = "http://127.0.0.1:5000";
+
+/*
 async function authToBackendServer(username: string, password: string): Promise<string> {
 	var token = null;
 	try {
@@ -45,6 +59,7 @@ async function authToBackendServer(username: string, password: string): Promise<
 	}
 	return token;
 }
+*/
 
 joplin.plugins.register({
 	onStart: async function () {
@@ -93,6 +108,7 @@ joplin.plugins.register({
 
 		/*******************Exporting Code*******************/
 		//---------respective command for main button
+		// export to NotesOn
 		await joplin.commands.register({
             name: 'exporterToBackendServer',
             label: 'Export to NotesOn',
@@ -102,16 +118,24 @@ joplin.plugins.register({
 				var accountToken = await joplin.settings.value('NotesOnAccountToken');
 
 				accountToken = null;
-				if (accountToken == '' || accountToken == null) {
-					try {
-						accountToken = await authToBackendServer(accountName, accountPassword);
-					}
-					catch (error) {
-						joplin.views.dialogs.showMessageBox(error);
-						return null;
-					}
+				// if (accountToken == '' || accountToken == null) {
+				// 	try {
+				// 		accountToken = await authToBackendServer(accountName, accountPassword);
+				// 	}
+				// 	catch (error) {
+				// 		joplin.views.dialogs.showMessageBox(error);
+				// 		return null;
+				// 	}
 
-					await joplin.settings.setValue('NotesOnAccountToken', accountToken);
+				// 	await joplin.settings.setValue('NotesOnAccountToken', accountToken);
+				// }
+				try {
+					accountToken = await auth_to_noteson(accountName, accountPassword);
+				}
+				catch (error) {
+					console.error(error);
+					joplin.views.dialogs.showMessageBox('Authication error to NotesOn');
+					return null;
 				}
 
 				const selected_note = await joplin.workspace.selectedNote();
@@ -129,34 +153,52 @@ joplin.plugins.register({
 
 				var response = null;
 				try {
-					const url = backend_server_url + "/notes";
-					response = await fetch(url, {
-										method: 'POST',
-										body: JSON.stringify({
+					const request_data = {
 											note_uid: selected_note.id,
 											note_content: selected_note.body,
 											note_filename: note_filename,
 											note_title: note_title,
+															is_obsidian: false,
 											metadata: JSON.stringify(metadata),
-										}),
-										headers: {
-											'Authorization': 'Bearer ' + accountToken,
-											'Content-Type': 'application/json',
-											Accept: 'application/json',
-										},
-						});
+														}
+					response = await post_note(
+                                                request_data,
+                                                accountToken
+                                            );
+                await navigator.clipboard.writeText(response.public_url);
+                // new Notice(getText('actions.create.success'));
+					// const url = backend_server_url + "/notes";
+					// response = await fetch(url, {
+					// 					method: 'POST',
+					// 					body: JSON.stringify({
+					// 						note_uid: selected_note.id,
+					// 						note_content: selected_note.body,
+					// 						note_filename: note_filename,
+					// 						note_title: note_title,
+					// 						metadata: JSON.stringify(metadata),
+					// 					}),
+					// 					headers: {
+					// 						'Authorization': 'Bearer ' + accountToken,
+					// 						'Content-Type': 'application/json',
+					// 						Accept: 'application/json',
+					// 					},
+					// 	});
 
-					if (!response.ok) {
-						throw new Error(`Error! status: ${response.status}`);
-					}
+					// if (!response.ok) {
+					// 	throw new Error(`Error! status: ${response.status}`);
+					// }
 				}
 				catch (error) {
-					if (error instanceof Error) {
-						joplin.views.dialogs.showMessageBox(error.message);
-					}
-					else {
-						joplin.views.dialogs.showMessageBox('Unexpected error: '+error);
-					}
+					console.error(error);
+					// if (error instanceof Error) {
+						// joplin.views.dialogs.showMessageBox(error.message);
+
+						// TODO make english great again
+						joplin.views.dialogs.showMessageBox('Error of publish note');
+					// }
+					// else {
+					// 	joplin.views.dialogs.showMessageBox('Unexpected error: '+error);
+					// }
 					return null;
 				}
 
@@ -170,26 +212,34 @@ joplin.plugins.register({
 
 					const srcPath = path.join(resourceDir, filename);
 
-					const files_server = backend_server_url + "/files";
+					// const files_server = backend_server_url + "/files";
+					// const options = {
+					// 				method: "POST",
+					// 				url: files_server,
+					// 				port: 80,
+					// 				headers: {
+					// 						'Authorization': 'Bearer ' + accountToken
+					// 				},
+					// 				formData: {
+					// 						'file': fs.createReadStream(srcPath)
+					// 				}
+					// 	};
+                            // const data = await file.vault.readBinary(fi);
+                            // const blob = new Blob([data]);
+							const blob = fs.createReadStream(srcPath);
+                            const big_file = new File([blob], srcPath, { type: 'image/png' });
+			
+					const formData = new FormData();
+					formData.append('file', big_file, big_file.name);
+					const result = await post_file(formData, accountToken);
+					console.log(`result of send file: ${JSON.stringify(result)}`);
 
-					const options = {
-									method: "POST",
-									url: files_server,
-									port: 80,
-									headers: {
-											'Authorization': 'Bearer ' + accountToken
-									},
-									formData: {
-											'file': fs.createReadStream(srcPath)
-									}
-						};
-
-					request(options, function (err, res, body) {
-											if (err) 
-												joplin.views.dialogs.showMessageBox('Error: ' + JSON.stringify(err));
-						})
+					// request(options, function (err, res, body) {
+					// 						if (err) 
+					// 							joplin.views.dialogs.showMessageBox('Error: ' + JSON.stringify(err));
+					// 	})
 				};
-
+console.log(response.public_url);
 				const result = await response.json();
 				const public_url = await result['public_url'];
 
@@ -237,7 +287,7 @@ joplin.plugins.register({
 				}
 			}
 		});
-
+		// delete from NotesOn
 		await joplin.commands.register({
             name: 'deleteFromBackendServer',
             label: 'Delete from NotesOn',
@@ -247,37 +297,42 @@ joplin.plugins.register({
 				var accountToken = await joplin.settings.value('NotesOnAccountToken');
 	
 				try {
-					const accessToken = authToBackendServer(accountName, accountPassword);
+					// const accessToken = authToBackendServer(accountName, accountPassword);
+					accountToken = await auth_to_noteson(accountName, accountPassword);
 				}
 				catch (error) {
-					joplin.views.dialogs.showMessageBox(error);
+					console.error(error);
+					joplin.views.dialogs.showMessageBox('Authication error to NotesOn');
 					return null;
 				}
 
 				const selected_note = await joplin.workspace.selectedNote();
 
 				try {
-					const url = backend_server_url + "/note/" + selected_note.id;
-					const response = await fetch(url, {
-										method: 'DELETE',
-										headers: {
-												'Authorization': 'Bearer ' + accountToken,
-												'Content-Type': 'application/json',
-												Accept: 'application/json',
-										},
-						});
+					// const url = backend_server_url + "/note/" + selected_note.id;
+					// const response = await fetch(url, {
+					// 					method: 'DELETE',
+					// 					headers: {
+					// 							'Authorization': 'Bearer ' + accountToken,
+					// 							'Content-Type': 'application/json',
+					// 							Accept: 'application/json',
+					// 					},
+					// 	});
 
-					if (!response.ok) {
-						throw new Error(`${response.status}`);
-					}
+					// if (!response.ok) {
+					// 	throw new Error(`${response.status}`);
+					// }
+					await delete_note(selected_note.id, accountToken);
+
 				}
 				catch (error) {
-					if (error instanceof Error) {
-						joplin.views.dialogs.showMessageBox(error.message);
-					}
-					else {
-						joplin.views.dialogs.showMessageBox('Unexpected error: '+error);
-					}
+					console.error(error);
+					// if (error instanceof Error) {
+					joplin.views.dialogs.showMessageBox('Note delete failed');
+					// }
+					// else {
+					// 	joplin.views.dialogs.showMessageBox('Unexpected error: '+error);
+					// }
 					return null;
 				}
 
@@ -305,7 +360,7 @@ joplin.plugins.register({
 			}
 		});
 
-		// 
+		// send feedback to NotesOn
 		await joplin.commands.register({
             name: 'feedbackToBackendServer',
             label: 'Feedback for NotesOn',
@@ -315,7 +370,9 @@ joplin.plugins.register({
 
 				let accountToken;
 				try {
-					accountToken = await authToBackendServer(accountName, accountPassword);
+					// accountToken = await authToBackendServer(accountName, accountPassword);
+					accountToken = await auth_to_noteson(accountName, accountPassword);
+					// this.settings.username, this.settings.password);
 				}
 				catch (error) {
 					joplin.views.dialogs.showMessageBox(error);
@@ -327,41 +384,49 @@ joplin.plugins.register({
 				if (id == "send") {
 					const feedback_content = formData['feedback_form']['feedback_content'];
 
-					var response = null;
+					// var response = null;
 					try {
-						const url = backend_server_url + "/feedbacks";
-						response = await fetch(url, {
-											method: 'POST',
-											body: JSON.stringify({
-												content: feedback_content,
-											}),
-											headers: {
-												'Authorization': 'Bearer ' + accountToken,
-												'Content-Type': 'application/json',
-												Accept: 'application/json',
-											},
-							});
+						await post_feedback(
+                                                                feedback_content,
+                                                                accountToken
+                                                            );
+
+						// const url = backend_server_url + "/feedbacks";
+						// response = await fetch(url, {
+						// 					method: 'POST',
+						// 					body: JSON.stringify({
+						// 						content: feedback_content,
+						// 					}),
+						// 					headers: {
+						// 						'Authorization': 'Bearer ' + accountToken,
+						// 						'Content-Type': 'application/json',
+						// 						Accept: 'application/json',
+						// 					},
+						// 	});
 	
-						if (!response.ok) {
-							throw new Error(`Error! status: ${response.status}`);
-						}
-						else {
-							joplin.views.dialogs.showMessageBox('Feedback send successfully');
-						}
+						// if (!response.ok) {
+						// 	throw new Error(`Error! status: ${response.status}`);
+						// }
+						// else {
+						joplin.views.dialogs.showMessageBox('Feedback send successfully');
+						// }
 					}
 					catch (error) {
-						if (error instanceof Error) {
-							joplin.views.dialogs.showMessageBox(error.message);
-						}
-						else {
-							joplin.views.dialogs.showMessageBox('Unexpected error: '+error);
-						}
+						console.error(error);
+						// if (error instanceof Error) {
+							// joplin.views.dialogs.showMessageBox(error.message);
+						joplin.views.dialogs.showMessageBox('Feedback send failed');
+						// }
+						// else {
+						// 	joplin.views.dialogs.showMessageBox('Unexpected error: '+error);
+						// }
 						return null;
 					}
 				}
 			}
 		});
 
+		// get link for published note
 		await joplin.commands.register({
 			name: 'linkMaker',
 			label: 'Link to corresponding note. Creates it if needed.',
