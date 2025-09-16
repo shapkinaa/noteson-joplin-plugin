@@ -1,8 +1,8 @@
 {
 	"manifest_version": 1,
 	"id": "com.export-to-noteson.shapkinaa",
-	"app_min_version": "3.3",
-	"version": "1.0.7",
+	"app_min_version": "3.1",
+	"version": "1.0.8",
 	"name": "Export To NotesOn",
 	"description": "Export notes to NotesOn",
 	"author": "Andrey Shapkin",
@@ -13,6 +13,6 @@
 	"screenshots": [],
 	"icons": {},
 	"promo_tile": {},
-	"_publish_hash": "sha256:f20d6ce076acbb39cc95172a11e763d819cb85154a969462c6915936a65e5f90",
-	"_publish_commit": "main:ed2c9f908a5ce4b6f2bc487589205fcc42f8b41a"
+	"_publish_hash": "sha256:23bbdc9fae9b9dfcf3a2484064631537232b411508116970d303800ac0d372cf",
+	"_publish_commit": "main:5aaf360d8feb82c27a4d393b3a4ada77dc83efd2"
 }

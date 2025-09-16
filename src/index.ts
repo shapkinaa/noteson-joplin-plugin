@@ -1,65 +1,12 @@
-// import joplin from 'api';
-
-// joplin.plugins.register({
-// 	onStart: async function() {
-// 		// eslint-disable-next-line no-console
-// 		console.info('Hello world. Test plugin started!');
-// 	},
-// });
-
-
-
 import joplin from 'api';
 import { MenuItemLocation, SettingItemType, SettingItemSubType, ToolbarButtonLocation } from 'api/types';
 
-// const request = require("request");
 
 const fs = (joplin as any).require('fs-extra');
 const path = require('path');
 
 import { auth_to_noteson, post_file, post_note, get_notes, get_templates, post_feedback, delete_note } from './noteson_requests';
 
-// const backend_server_url = "http://noteson.ru:8000";
-// const backend_server_url = "http://127.0.0.1:5000";
-
-/*
-async function authToBackendServer(username: string, password: string): Promise<string> {
-	var token = null;
-	try {
-		const url = backend_server_url + "/auth";
-
-		const response = await fetch(url, {
-						method: 'POST',
-						body: JSON.stringify({
-								username: username,
-								password: password,
-						}),
-						headers: {
-								'Content-Type': 'application/json',
-								Accept: 'application/json',
-						},
-			});
-
-		if (!response.ok) {
-			const result = await response.json();
-
-			throw new Error(`${result.message}`);
-		}
-
-		const result = await response.json();
-		token = result['access_token'];
-	}
-	catch (error) {
-		if (error instanceof Error) {
-			throw new Error(`${error.message}`);
-		}
-		else {
-			throw new Error(`Unexpected error: ${error}`);
-		}
-	}
-	return token;
-}
-*/
 
 joplin.plugins.register({
 	onStart: async function () {
@@ -93,7 +40,7 @@ joplin.plugins.register({
 		await dialogs.addScript(feedback_dialog, './feedback_dialog.css');
 
 		//---------setting controls of dialog
-		await dialogs.setHtml(feedback_dialog, '<form name="feedback_form" class="feedback_form"><textarea class="feedback_content" id="feedback_content" name="feedback_content" maxlength=2048>Put here your feedback, 2048 chars maximum</textarea></form>')
+		await dialogs.setHtml(feedback_dialog, '<form name="feedback_form" class="feedback_form"><a target="_blank" rel="noopener noreferrer" href="https://www.donationalerts.com/r/shapkinaa">donationalerts.com</a><br><br>Your feedback<br><textarea class="feedback_content" id="feedback_content" name="feedback_content" maxlength=2048>Put here your feedback, 2048 chars maximum</textarea></form>')
 		await dialogs.setButtons(feedback_dialog, [
 			{
 				id: 'send',
@@ -118,17 +65,6 @@ joplin.plugins.register({
 				var accountToken = await joplin.settings.value('NotesOnAccountToken');
 
 				accountToken = null;
-				// if (accountToken == '' || accountToken == null) {
-				// 	try {
-				// 		accountToken = await authToBackendServer(accountName, accountPassword);
-				// 	}
-				// 	catch (error) {
-				// 		joplin.views.dialogs.showMessageBox(error);
-				// 		return null;
-				// 	}
-
-				// 	await joplin.settings.setValue('NotesOnAccountToken', accountToken);
-				// }
 				try {
 					accountToken = await auth_to_noteson(accountName, accountPassword);
 				}
@@ -148,7 +84,7 @@ joplin.plugins.register({
 
 				const tags = await joplin.data.get(['notes', selected_note.id, 'tags']);
 				var metadata = {
-					"tags": tags
+					"tags": {}
 				};
 
 				var response = null;
@@ -158,47 +94,16 @@ joplin.plugins.register({
 											note_content: selected_note.body,
 											note_filename: note_filename,
 											note_title: note_title,
-															is_obsidian: false,
 											metadata: JSON.stringify(metadata),
-														}
+										}
 					response = await post_note(
-                                                request_data,
-                                                accountToken
-                                            );
-                await navigator.clipboard.writeText(response.public_url);
-                // new Notice(getText('actions.create.success'));
-					// const url = backend_server_url + "/notes";
-					// response = await fetch(url, {
-					// 					method: 'POST',
-					// 					body: JSON.stringify({
-					// 						note_uid: selected_note.id,
-					// 						note_content: selected_note.body,
-					// 						note_filename: note_filename,
-					// 						note_title: note_title,
-					// 						metadata: JSON.stringify(metadata),
-					// 					}),
-					// 					headers: {
-					// 						'Authorization': 'Bearer ' + accountToken,
-					// 						'Content-Type': 'application/json',
-					// 						Accept: 'application/json',
-					// 					},
-					// 	});
-
-					// if (!response.ok) {
-					// 	throw new Error(`Error! status: ${response.status}`);
-					// }
+											request_data,
+											accountToken
+										);
 				}
 				catch (error) {
 					console.error(error);
-					// if (error instanceof Error) {
-						// joplin.views.dialogs.showMessageBox(error.message);
-
-						// TODO make english great again
-						joplin.views.dialogs.showMessageBox('Error of publish note');
-					// }
-					// else {
-					// 	joplin.views.dialogs.showMessageBox('Unexpected error: '+error);
-					// }
+					joplin.views.dialogs.showMessageBox('Error publishing note');
 					return null;
 				}
 
@@ -212,36 +117,15 @@ joplin.plugins.register({
 
 					const srcPath = path.join(resourceDir, filename);
 
-					// const files_server = backend_server_url + "/files";
-					// const options = {
-					// 				method: "POST",
-					// 				url: files_server,
-					// 				port: 80,
-					// 				headers: {
-					// 						'Authorization': 'Bearer ' + accountToken
-					// 				},
-					// 				formData: {
-					// 						'file': fs.createReadStream(srcPath)
-					// 				}
-					// 	};
-                            // const data = await file.vault.readBinary(fi);
-                            // const blob = new Blob([data]);
-							const blob = fs.createReadStream(srcPath);
-                            const big_file = new File([blob], srcPath, { type: 'image/png' });
+					const blob = await fs.readFileSync(srcPath);
+					const big_file = new File([blob], srcPath, { type: 'image/png' });
 			
 					const formData = new FormData();
-					formData.append('file', big_file, big_file.name);
+					formData.append('file', big_file, filename);
 					const result = await post_file(formData, accountToken);
-					console.log(`result of send file: ${JSON.stringify(result)}`);
-
-					// request(options, function (err, res, body) {
-					// 						if (err) 
-					// 							joplin.views.dialogs.showMessageBox('Error: ' + JSON.stringify(err));
-					// 	})
 				};
-console.log(response.public_url);
-				const result = await response.json();
-				const public_url = await result['public_url'];
+
+				const public_url = response.public_url
 
 				const public_url_dialog_html = `
 					<div class="dialog" >
@@ -297,7 +181,6 @@ console.log(response.public_url);
 				var accountToken = await joplin.settings.value('NotesOnAccountToken');
 	
 				try {
-					// const accessToken = authToBackendServer(accountName, accountPassword);
 					accountToken = await auth_to_noteson(accountName, accountPassword);
 				}
 				catch (error) {
@@ -309,30 +192,11 @@ console.log(response.public_url);
 				const selected_note = await joplin.workspace.selectedNote();
 
 				try {
-					// const url = backend_server_url + "/note/" + selected_note.id;
-					// const response = await fetch(url, {
-					// 					method: 'DELETE',
-					// 					headers: {
-					// 							'Authorization': 'Bearer ' + accountToken,
-					// 							'Content-Type': 'application/json',
-					// 							Accept: 'application/json',
-					// 					},
-					// 	});
-
-					// if (!response.ok) {
-					// 	throw new Error(`${response.status}`);
-					// }
 					await delete_note(selected_note.id, accountToken);
-
 				}
 				catch (error) {
 					console.error(error);
-					// if (error instanceof Error) {
 					joplin.views.dialogs.showMessageBox('Note delete failed');
-					// }
-					// else {
-					// 	joplin.views.dialogs.showMessageBox('Unexpected error: '+error);
-					// }
 					return null;
 				}
 
@@ -370,9 +234,7 @@ console.log(response.public_url);
 
 				let accountToken;
 				try {
-					// accountToken = await authToBackendServer(accountName, accountPassword);
 					accountToken = await auth_to_noteson(accountName, accountPassword);
-					// this.settings.username, this.settings.password);
 				}
 				catch (error) {
 					joplin.views.dialogs.showMessageBox(error);
@@ -384,42 +246,17 @@ console.log(response.public_url);
 				if (id == "send") {
 					const feedback_content = formData['feedback_form']['feedback_content'];
 
-					// var response = null;
 					try {
 						await post_feedback(
-                                                                feedback_content,
-                                                                accountToken
-                                                            );
+											feedback_content,
+											accountToken
+										);
 
-						// const url = backend_server_url + "/feedbacks";
-						// response = await fetch(url, {
-						// 					method: 'POST',
-						// 					body: JSON.stringify({
-						// 						content: feedback_content,
-						// 					}),
-						// 					headers: {
-						// 						'Authorization': 'Bearer ' + accountToken,
-						// 						'Content-Type': 'application/json',
-						// 						Accept: 'application/json',
-						// 					},
-						// 	});
-	
-						// if (!response.ok) {
-						// 	throw new Error(`Error! status: ${response.status}`);
-						// }
-						// else {
 						joplin.views.dialogs.showMessageBox('Feedback send successfully');
-						// }
 					}
 					catch (error) {
 						console.error(error);
-						// if (error instanceof Error) {
-							// joplin.views.dialogs.showMessageBox(error.message);
 						joplin.views.dialogs.showMessageBox('Feedback send failed');
-						// }
-						// else {
-						// 	joplin.views.dialogs.showMessageBox('Unexpected error: '+error);
-						// }
 						return null;
 					}
 				}

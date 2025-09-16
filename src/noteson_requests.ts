@@ -1,12 +1,11 @@
 const FormData = require('form-data');
-// import FormData from 'form-data';
 
 
 import { http_get, http_post, http_post_formdata, http_delete } from './http';
 
 
-// const baseUrl = "https://api.noteson.ru";
-const baseUrl = 'http://localhost:5000';
+const baseUrl = "https://api.noteson.ru";
+// const baseUrl = 'http://localhost:5000';
 
 export async function auth_to_noteson(username: string, password: string): Promise<string> {
     try {
