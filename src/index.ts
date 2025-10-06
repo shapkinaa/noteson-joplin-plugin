@@ -7,51 +7,19 @@ const path = require('path');
 
 import { auth_to_noteson, post_file, post_note, get_notes, get_templates, post_feedback, delete_note } from './noteson_requests';
 
+import { createPublishDialog } from './dialogs/publish_dialog';
+import { createPublicURLDialog } from './dialogs/public_url_dialog';
+import { createFeedbackDialog } from './dialogs/feedback_dialog';
+
 
 joplin.plugins.register({
 	onStart: async function () {
 
-		const resourceDir = await joplin.settings.globalValue('resourceDir');
-
-		/*******************Public URL Dialog Configurations*******************/
 		const dialogs = joplin.views.dialogs;
-		const public_url_dialog = await dialogs.create('Public-URL-Dialog');
 
-		//---------add the css file for form
-		await dialogs.addScript(public_url_dialog, './public_url.css');
-
-		//---------setting controls of dialog
-		await dialogs.setButtons(public_url_dialog, [
-			{
-				id: 'copyclipboard',
-				title: 'Copy URL to Clipboard'
-			},
-			{
-				id: 'close',
-				title: 'Close'
-			}
-		]);
-		/*******************Public URL Dialog Configurations*******************/
-		/*******************Feedback Dialog Configurations*******************/
-		// const dialogs = joplin.views.dialogs;
-		const feedback_dialog = await dialogs.create('Feedback-Dialog');
-
-		//---------add the css file for form
-		await dialogs.addScript(feedback_dialog, './feedback_dialog.css');
-
-		//---------setting controls of dialog
-		await dialogs.setHtml(feedback_dialog, '<form name="feedback_form" class="feedback_form"><a target="_blank" rel="noopener noreferrer" href="https://www.donationalerts.com/r/shapkinaa">donationalerts.com</a><br><br>Your feedback<br><textarea class="feedback_content" id="feedback_content" name="feedback_content" maxlength=2048>Put here your feedback, 2048 chars maximum</textarea></form>')
-		await dialogs.setButtons(feedback_dialog, [
-			{
-				id: 'send',
-				title: 'Send feedback'
-			},
-			{
-				id: 'close',
-				title: 'Close'
-			}
-		]);
-		/*******************Feedback Dialog Configurations*******************/
+		const publish_dialog = await createPublishDialog(dialogs)
+		const public_url_dialog = await createPublicURLDialog(dialogs)
+		const feedback_dialog = await createFeedbackDialog(dialogs)
 
 		/*******************Exporting Code*******************/
 		//---------respective command for main button
@@ -60,9 +28,12 @@ joplin.plugins.register({
             name: 'exporterToBackendServer',
             label: 'Export to NotesOn',
             execute: async (...args) => {
-				const accountName = await joplin.settings.value('NotesOnAccountName');
-				const accountPassword = await joplin.settings.value('NotesOnAccountPassword');
-				var accountToken = await joplin.settings.value('NotesOnAccountToken');
+				const values = await joplin.settings.values(['NotesOnAccountName', 'NotesOnAccountPassword', 'NotesOnAccountToken']);
+				const accountName = String(values['NotesOnAccountName']);
+				const accountPassword = String(values['NotesOnAccountPassword']);
+				var accountToken = String(values['NotesOnAccountToken']);
+
+				await dialogs.open(publish_dialog);
 
 				accountToken = null;
 				try {
@@ -113,7 +84,8 @@ joplin.plugins.register({
 					const resource = items[i];
 
 					const filename = resource.id+'.'+resource.file_extension;
-					const resourceDir = await joplin.settings.globalValue('resourceDir');
+					const values = await joplin.settings.globalValues(['resourceDir']);
+					const resourceDir = String(values['resourceDir']);
 
 					const srcPath = path.join(resourceDir, filename);
 
@@ -176,9 +148,10 @@ joplin.plugins.register({
             name: 'deleteFromBackendServer',
             label: 'Delete from NotesOn',
             execute: async (...args) => {
-				const accountName = await joplin.settings.value('NotesOnAccountName');
-				const accountPassword = await joplin.settings.value('NotesOnAccountPassword');
-				var accountToken = await joplin.settings.value('NotesOnAccountToken');
+				const values = await joplin.settings.values(['NotesOnAccountName', 'NotesOnAccountPassword', 'NotesOnAccountToken']);
+				const accountName = String(values['NotesOnAccountName']);
+				const accountPassword = String(values['NotesOnAccountPassword']);
+				var accountToken = String(values['NotesOnAccountToken']);
 	
 				try {
 					accountToken = await auth_to_noteson(accountName, accountPassword);
@@ -229,8 +202,9 @@ joplin.plugins.register({
             name: 'feedbackToBackendServer',
             label: 'Feedback for NotesOn',
             execute: async (...args) => {
-				const accountName = await joplin.settings.value('NotesOnAccountName');
-				const accountPassword = await joplin.settings.value('NotesOnAccountPassword');
+				const values = await joplin.settings.values(['NotesOnAccountName', 'NotesOnAccountPassword']);
+				const accountName = String(values['NotesOnAccountName']);
+				const accountPassword = String(values['NotesOnAccountPassword']);
 
 				let accountToken;
 				try {
