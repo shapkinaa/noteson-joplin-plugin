@@ -84,8 +84,9 @@ joplin.plugins.register({
 					const resource = items[i];
 
 					const filename = resource.id+'.'+resource.file_extension;
-					const values = await joplin.settings.globalValues(['resourceDir']);
-					const resourceDir = String(values['resourceDir']);
+
+					const values = await joplin.settings.globalValue('resourceDir');
+					const resourceDir = values
 
 					const srcPath = path.join(resourceDir, filename);
 
